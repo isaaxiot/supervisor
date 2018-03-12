@@ -2,6 +2,7 @@ package supervisor
 
 import (
 	"errors"
+	"os"
 )
 
 const (
@@ -50,4 +51,8 @@ func NewService(name, cmd, description, workingDir string, dependencies []string
 // GetSimple returns supervised instance
 func GetSimple(name string) Service {
 	return getService(name)
+}
+
+func Interactive() bool {
+	return os.Getppid() != 1
 }
