@@ -23,7 +23,7 @@ type darwin struct {
 }
 
 func newService(name, cmd, description, workingDir string, dependencies []string, environ map[string]string) Service {
-	return &darwin{name: name, cmd: cmd, description: description, workingDir: workingDir, dependencies: dependencies}
+	return &darwin{name: name, cmd: cmd, description: description, workingDir: workingDir, logDir: workingDir + "log/", dependencies: dependencies}
 }
 
 func getService(name string) Service {
@@ -118,9 +118,7 @@ func (d *darwin) Remove() (string, error) {
 		return "", errNotInstalled
 	}
 
-	if err := run("launchctl", "remove", d.name); err != nil {
-		return "", err
-	}
+	run("launchctl", "remove", d.servicePath())
 
 	if err := os.Remove(d.servicePath()); err != nil {
 		return "", err
@@ -153,9 +151,7 @@ func (d *darwin) Stop() (string, error) {
 }
 
 func (d *darwin) Restart() (string, error) {
-	if s, err := d.Stop(); err != nil {
-		return s, err
-	}
+	d.Stop()
 
 	time.Sleep(50 * time.Millisecond)
 	if s, err := d.Start(); err != nil {
