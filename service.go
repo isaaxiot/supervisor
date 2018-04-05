@@ -44,8 +44,8 @@ type Service interface {
 }
 
 // NewService returns new supervised service
-func NewService(name, cmd, description, workingDir string, dependencies []string, environ map[string]string) Service {
-	return newService(name, cmd, description, workingDir, dependencies, environ)
+func NewService(name, cmd, description, workingDir, logFile string, dependencies []string, environ map[string]string) Service {
+	return newService(name, cmd, description, workingDir, logFile, dependencies, environ)
 }
 
 // GetSimple returns supervised instance

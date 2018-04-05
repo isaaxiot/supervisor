@@ -6,20 +6,20 @@ import (
 )
 
 // newService returns new supervised service
-func newService(name, cmd, description, workingDir string, dependencies []string, environ map[string]string) Service {
+func newService(name, cmd, description, workingDir, logFile string, dependencies []string, environ map[string]string) Service {
 	if _, err := os.Stat("/run/systemd/system"); err == nil {
-		return newSystemDService(name, cmd, description, workingDir, dependencies, environ)
+		return newSystemDService(name, cmd, description, workingDir, logFile, dependencies, environ)
 	}
 
 	if _, err := os.Stat("/sbin/initctl"); err == nil {
-		return newUpstartService(name, cmd, description, workingDir, dependencies, environ)
+		return newUpstartService(name, cmd, description, workingDir, logFile, dependencies, environ)
 	}
 
 	if _, err := os.Stat("/sbin/procd"); err == nil {
-		return newProcDService(name, cmd, description, workingDir, dependencies, environ)
+		return newProcDService(name, cmd, description, workingDir, logFile, dependencies, environ)
 	}
 
-	return newSystemVService(name, cmd, description, workingDir, dependencies, environ)
+	return newSystemVService(name, cmd, description, workingDir, logFile, dependencies, environ)
 }
 
 func getService(name string) Service {
@@ -38,11 +38,12 @@ func getService(name string) Service {
 	return &systemV{name: name}
 }
 
-func newSystemDService(name, cmd, description, workingDir string, dependencies []string, environ map[string]string) Service {
+func newSystemDService(name, cmd, description, workingDir, logFile string, dependencies []string, environ map[string]string) Service {
 	return &systemD{
 		name:         name,
 		cmd:          cmd,
 		workingDir:   workingDir,
+		logFile:      logFile,
 		restart:      "on-failure",
 		restartSec:   "10",
 		environ:      environ,
@@ -51,33 +52,36 @@ func newSystemDService(name, cmd, description, workingDir string, dependencies [
 	}
 }
 
-func newSystemVService(name, cmd, description, workingDir string, dependencies []string, environ map[string]string) Service {
+func newSystemVService(name, cmd, description, workingDir, logFile string, dependencies []string, environ map[string]string) Service {
 	return &systemV{
 		name:         name,
 		cmd:          cmd,
 		workingDir:   workingDir,
+		logFile:      logFile,
 		environ:      environ,
 		description:  description,
 		dependencies: dependencies,
 	}
 }
 
-func newUpstartService(name, cmd, description, workingDir string, dependencies []string, environ map[string]string) Service {
+func newUpstartService(name, cmd, description, workingDir, logFile string, dependencies []string, environ map[string]string) Service {
 	return &upstart{
 		name:         name,
 		cmd:          cmd,
 		workingDir:   workingDir,
+		logFile:      logFile,
 		environ:      environ,
 		description:  description,
 		dependencies: dependencies,
 	}
 }
 
-func newProcDService(name, cmd, description, workingDir string, dependencies []string, environ map[string]string) Service {
+func newProcDService(name, cmd, description, workingDir, logFile string, dependencies []string, environ map[string]string) Service {
 	return &procd{
 		name:         name,
 		cmd:          cmd,
 		workingDir:   workingDir,
+		logFile:      logFile,
 		environ:      environ,
 		description:  description,
 		dependencies: dependencies,

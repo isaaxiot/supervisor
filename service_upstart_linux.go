@@ -16,6 +16,7 @@ type upstart struct {
 	description  string
 	dependencies []string
 	workingDir   string
+	logFile      string
 	environ      map[string]string
 }
 
@@ -174,5 +175,5 @@ stop on runlevel [016]
 respawn
 #kill timeout 5
 chdir {{.WorkingDir}}
-exec /bin/sh -c '{{.Cmd}} {{.Args}} >> /var/log/{{.Name}}.log 2>&1 '
+exec /bin/sh -c '{{.Cmd}} {{.Args}} >> {{.logFile}} 2>&1 '
 `

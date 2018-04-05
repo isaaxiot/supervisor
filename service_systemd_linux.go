@@ -15,6 +15,7 @@ type systemD struct {
 	description  string
 	dependencies []string
 	workingDir   string
+	logFile      string
 	environ      map[string]string
 	restart      string
 	restartSec   string
@@ -159,7 +160,7 @@ func (s *systemD) Install(args ...string) (string, error) {
 			Description  string
 			Dependencies string
 			Args         string
-			Log          string
+			LogFile      string
 			EnVar        string
 			Restart      string
 			RestartSec   string
@@ -173,6 +174,7 @@ func (s *systemD) Install(args ...string) (string, error) {
 			EnVar:        env,
 			Restart:      s.restart,
 			WorkingDir:   s.workingDir,
+			LogFile:      s.logFile,
 			RestartSec:   s.restartSec,
 		},
 	); err != nil {
@@ -279,7 +281,7 @@ CPUAccounting=yes
 MemoryAccounting=yes
 PIDFile=/var/run/{{.Name}}.pid
 ExecStartPre=/bin/rm -f /var/run/{{.Name}}.pid
-ExecStart=/bin/sh -c '{{.Cmd}} {{.Args}} >>/var/log/{{.Name}}.log 2>&1'
+ExecStart=/bin/sh -c '{{.Cmd}} {{.Args}} >>{{.LogFile}} 2>&1'
 WorkingDirectory={{.WorkingDir}}
 Environment={{.EnVar}}
 Restart={{.Restart}}

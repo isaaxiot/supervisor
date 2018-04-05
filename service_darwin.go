@@ -4,8 +4,10 @@ import (
 	"os"
 	"os/exec"
 	"os/user"
+	"path/filepath"
 	"regexp"
 	"strconv"
+	"strings"
 	"text/template"
 	"time"
 )
@@ -19,11 +21,12 @@ type darwin struct {
 	workingDir   string
 	restart      string
 	restartSec   string
-	logDir       string
+	logFile      string
+	envs         map[string]string
 }
 
-func newService(name, cmd, description, workingDir string, dependencies []string, environ map[string]string) Service {
-	return &darwin{name: name, cmd: cmd, description: description, workingDir: workingDir, logDir: workingDir + "log/", dependencies: dependencies}
+func newService(name, cmd, description, workingDir, logFile string, dependencies []string, envs map[string]string) Service {
+	return &darwin{name: name, cmd: cmd, description: description, workingDir: workingDir, logFile: logFile, dependencies: dependencies, envs: envs}
 }
 
 func getService(name string) Service {
@@ -95,15 +98,29 @@ func (d *darwin) Install(args ...string) (string, error) {
 	if err != nil {
 		return installFailed, err
 	}
-
+	cmd := strings.Split(d.cmd, " ")
+	if len(cmd) > 1 {
+		d.cmd = cmd[0]
+		args = append(cmd[1:], args...)
+	}
+	if filepath.Base(d.cmd) == d.cmd { //check IsAbs
+		path, err := exec.LookPath(d.cmd)
+		if err == nil {
+			d.cmd = path
+		}
+	}
 	if err := templ.Execute(
 		file,
 		&struct {
-			Name, Cmd          string
-			WorkingDir, LogDir string
-			Args               []string
+			Name, Cmd           string
+			WorkingDir, LogFile string
+			Args                []string
+			Envs                map[string]string
 		}{
-			Name: d.name, Cmd: d.cmd, Args: args, WorkingDir: d.workingDir, LogDir: d.logDir,
+			Name: d.name, Cmd: d.cmd,
+			Args:       args,
+			WorkingDir: d.workingDir, LogFile: d.logFile,
+			Envs: d.envs,
 		},
 	); err != nil {
 		return installFailed, err
@@ -175,29 +192,35 @@ var propertyList = `<?xml version="1.0" encoding="UTF-8"?>
 <plist version="1.0">
 <dict>
     <key>Label</key><string>{{html .Name}}</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+{{ range $key, $value := .Envs }}<key>{{ $key }}</key>
+        <string>{{ $value }}</string>
+{{ end }}
+    </dict>
 	<key>ProgramArguments</key>
 	<array>
 		<string>{{.Cmd}}</string>
-{{range .Args}}
-        <string>{{html .}}</string>
+{{range .Args}}<string>{{html .}}</string>
 {{end}}
 	</array>
     <key>WorkingDirectory</key>
     <string>{{.WorkingDir}}</string>
 
     <key>StandardErrorPath</key>
-    <string>{{.LogDir}}{{.Name}}.log</string>
+    <string>{{.LogFile}}</string>
     <key>StandardOutPath</key>
-    <string>{{.LogDir}}{{.Name}}.log</string>
+    <string>{{.LogFile}}</string>
 
     <key>SessionCreate</key>
     <false/>
-	<key>KeepAlive</key>
-	<true/>
-	<key>RunAtLoad</key>
-	<true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>RunAtLoad</key>
+    <true/>
     <key>Disabled</key>
     <false/>
+
 </dict>
 </plist>
 `

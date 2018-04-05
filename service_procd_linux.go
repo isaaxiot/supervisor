@@ -17,6 +17,7 @@ type procd struct {
 	description  string
 	dependencies []string
 	workingDir   string
+	logFile      string
 	environ      map[string]string
 }
 

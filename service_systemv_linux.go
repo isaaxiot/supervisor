@@ -16,6 +16,7 @@ type systemV struct {
 	description  string
 	dependencies []string
 	workingDir   string
+	logFile      string
 	environ      map[string]string
 }
 
@@ -76,12 +77,14 @@ func (l *systemV) Install(args ...string) (string, error) {
 	if err := templ.Execute(
 		file,
 		&struct {
-			Name, Description, WorkingDir, Args string
-			Cmd                                 string
+			Name, Description   string
+			WorkingDir, LogFile string
+			Args, Cmd           string
 		}{
 			Name:        l.name,
 			Cmd:         l.cmd,
 			WorkingDir:  l.workingDir,
+			LogFile:     l.logFile,
 			Description: l.description,
 			Args:        strings.Join(args, " "),
 		},
@@ -233,8 +236,8 @@ fi
 proc="{{.Name}}"
 pidfile="/var/run/$proc.pid"
 lockfile="/var/lock/subsys/$proc"
-stdoutlog="/var/log/$proc.log"
-stderrlog="/var/log/$proc.log"
+stdoutlog="$logFile"
+stderrlog="$logFile"
 
 exec="/bin/bash -c '{{.Cmd}} {{.Args}} >> $stdoutlog 2>> $stderrlog & ' "
 servname="{{.Description}}"
