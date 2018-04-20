@@ -106,6 +106,10 @@ func (s *systemD) Install(args ...string) (string, error) {
 		environ := mapToSlice(s.environ)
 		env = environSystemd(environ)
 	}
+	envFile := path.Join(s.workingDir, s.name+".env")
+	if _, err := os.Stat(envFile); os.IsNotExist(err) {
+		envFile = ""
+	}
 	if err := t.Execute(
 		file,
 		&struct {
@@ -127,7 +131,7 @@ func (s *systemD) Install(args ...string) (string, error) {
 			Dependencies: strings.Join(s.dependencies, " "),
 			Args:         strings.Join(args, " "),
 			EnVar:        env,
-			EnvFile:      path.Join(s.workingDir, s.name+".env"),
+			EnvFile:      envFile,
 			Restart:      s.restart,
 			WorkingDir:   s.workingDir,
 			LogFile:      s.logFile,
@@ -240,7 +244,7 @@ ExecStartPre=/bin/rm -f /var/run/{{.Name}}.pid
 ExecStart=/bin/sh -c '{{.Cmd}} {{.Args}} >>{{.LogFile}} 2>&1'
 WorkingDirectory={{.WorkingDir}}
 Environment={{.EnVar}}
-EnvironmentFile={{.EnvFile}}
+{{if .EnvFile}}EnvironmentFile={{.EnvFile}}{{end}}
 Restart={{.Restart}}
 RestartSec={{.RestartSec}}
 
