@@ -130,7 +130,7 @@ func (u *procd) Remove() (string, error) {
 	return removed, nil
 }
 
-func (u *procd) UpdateEnviron(env []string) (string, error) {
+func (u *procd) UpdateEnviron(env map[string]string) (string, error) {
 	if ok, err := checkPrivileges(); !ok {
 		return "", err
 	}
@@ -166,7 +166,7 @@ func (u *procd) UpdateEnviron(env []string) (string, error) {
 			Name:        u.name,
 			Cmd:         u.cmd,
 			Description: u.description,
-			EnVar:       environProcd(env),
+			EnVar:       environProcd(mapToSlice(env)),
 			WorkingDir:  u.workingDir,
 			Args:        strings.Join([]string{}, " ")},
 	); err != nil {

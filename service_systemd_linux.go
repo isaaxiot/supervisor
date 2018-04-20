@@ -3,6 +3,7 @@ package supervisor
 import (
 	"os"
 	"os/exec"
+	"path"
 	"regexp"
 	"strconv"
 	"strings"
@@ -41,54 +42,7 @@ func (s *systemD) Restart() (string, error) {
 	return "restarting", nil
 }
 
-func (s *systemD) UpdateEnviron(env []string) (string, error) {
-
-	//check if calling user is root
-	if ok, err := isRoot(); !ok {
-		return updateFailed, err
-	}
-	//check if app has a service unit file
-	if !s.IsInstalled() {
-		return updateFailed, errNotInstalled
-	}
-
-	file, err := os.Create(s.unitFile())
-	if err != nil {
-		return updateFailed, err
-	}
-	defer file.Close()
-
-	t, err := template.New("systemdConfig").Parse(systemDConfig)
-	if err != nil {
-		return updateFailed, err
-	}
-
-	if err := t.Execute(
-		file,
-		&struct {
-			Name         string
-			Cmd          string
-			Description  string
-			Dependencies string
-			Args         string
-			EnVar        string
-			Restart      string
-			RestartSec   string
-			WorkingDir   string
-		}{
-			Name:         s.name,
-			Cmd:          s.cmd,
-			Description:  s.description,
-			Dependencies: strings.Join(s.dependencies, " "),
-			Args:         strings.Join([]string{}, " "),
-			EnVar:        environSystemd(env),
-			Restart:      s.restart,
-			WorkingDir:   s.workingDir,
-			RestartSec:   s.restartSec,
-		},
-	); err != nil {
-		return updateFailed, err
-	}
+func (s *systemD) UpdateEnviron(env map[string]string) (string, error) {
 
 	if err := exec.Command("systemctl", "daemon-reload").Run(); err != nil {
 		return updateFailed, err
@@ -162,6 +116,7 @@ func (s *systemD) Install(args ...string) (string, error) {
 			Args         string
 			LogFile      string
 			EnVar        string
+			EnvFile      string
 			Restart      string
 			RestartSec   string
 			WorkingDir   string
@@ -172,6 +127,7 @@ func (s *systemD) Install(args ...string) (string, error) {
 			Dependencies: strings.Join(s.dependencies, " "),
 			Args:         strings.Join(args, " "),
 			EnVar:        env,
+			EnvFile:      path.Join(s.workingDir, s.name+".env"),
 			Restart:      s.restart,
 			WorkingDir:   s.workingDir,
 			LogFile:      s.logFile,
@@ -284,6 +240,7 @@ ExecStartPre=/bin/rm -f /var/run/{{.Name}}.pid
 ExecStart=/bin/sh -c '{{.Cmd}} {{.Args}} >>{{.LogFile}} 2>&1'
 WorkingDirectory={{.WorkingDir}}
 Environment={{.EnVar}}
+EnvironmentFile={{.EnvFile}}
 Restart={{.Restart}}
 RestartSec={{.RestartSec}}
 

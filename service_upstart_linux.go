@@ -109,7 +109,7 @@ func (u *upstart) Remove() (string, error) {
 	return removed, nil
 }
 
-func (u *upstart) UpdateEnviron(env []string) (string, error) {
+func (u *upstart) UpdateEnviron(env map[string]string) (string, error) {
 	return "", nil
 }
 

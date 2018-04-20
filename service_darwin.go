@@ -46,8 +46,12 @@ func (d *darwin) ServiceName() string {
 	return d.name + ".plist"
 }
 
-func (d *darwin) UpdateEnviron(env []string) (string, error) {
-	return "", nil
+func (d *darwin) UpdateEnviron(env map[string]string) (string, error) {
+	d.Remove()
+	if status, err := d.Install(); err != nil {
+		return status, err
+	}
+	return "updated", nil
 }
 
 // Is a service installed

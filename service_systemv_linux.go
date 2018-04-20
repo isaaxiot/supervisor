@@ -174,7 +174,7 @@ func (l *systemV) Restart() (string, error) {
 	return restarted, nil
 }
 
-func (l *systemV) UpdateEnviron(environ []string) (string, error) {
+func (l *systemV) UpdateEnviron(environ map[string]string) (string, error) {
 	return "", nil
 }
 

@@ -35,7 +35,7 @@ type Service interface {
 	Restart() (string, error)
 	Start() (string, error)
 	Stop() (string, error)
-	UpdateEnviron(env []string) (string, error)
+	UpdateEnviron(env map[string]string) (string, error)
 	Install(args ...string) (string, error)
 	Remove() (string, error)
 	PID() (int, error)
