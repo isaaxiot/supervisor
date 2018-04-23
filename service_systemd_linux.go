@@ -102,13 +102,14 @@ func (s *systemD) Install(args ...string) (string, error) {
 		return installFailed, err
 	}
 	var env string
-	if s.environ != nil {
-		environ := mapToSlice(s.environ)
-		env = environSystemd(environ)
-	}
 	envFile := path.Join(s.workingDir, s.name+".env")
 	if _, err := os.Stat(envFile); os.IsNotExist(err) {
 		envFile = ""
+	}
+
+	if s.environ != nil && envFile == "" {
+		environ := mapToSlice(s.environ)
+		env = environSystemd(environ)
 	}
 	if err := t.Execute(
 		file,
